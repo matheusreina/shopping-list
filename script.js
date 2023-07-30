@@ -4,7 +4,13 @@ const itemList = document.getElementById("item-list");
 const itemFilter = document.getElementById("filter");
 const clearBtn = document.getElementById("clear");
 
-const addItem = (e) => {
+const displayItems = () => {
+  const itemsFromStorage = getItemsFromStorage();
+  itemsFromStorage.forEach((item) => addItemToDOM(item));
+  checkUI();
+};
+
+const onAddItemSubmit = (e) => {
   e.preventDefault();
 
   const newItem = itemInput.value;
@@ -15,15 +21,11 @@ const addItem = (e) => {
     return;
   }
 
-  //  Create list item
-  const li = document.createElement("li");
-  li.appendChild(document.createTextNode(newItem));
+  // Create Item DOM Element
+  addItemToDOM(newItem);
 
-  const button = createButton("remove-item btn-link text-red");
-  li.appendChild(button);
-
-  // Add UI to the DOM
-  itemList.appendChild(li);
+  // Add item to local storage
+  addItemToStorage(newItem);
 
   // Check if there is items in the listo to return the UI
   checkUI();
@@ -32,6 +34,28 @@ const addItem = (e) => {
   itemInput.value = "";
 };
 
+const addItemToDOM = (item) => {
+  //  Create list item
+  const li = document.createElement("li");
+  li.appendChild(document.createTextNode(item));
+
+  const button = createButton("remove-item btn-link text-red");
+  li.appendChild(button);
+
+  // Add UI to the DOM
+  itemList.appendChild(li);
+};
+
+const addItemToStorage = (item) => {
+  const itemsFromStorage = getItemsFromStorage();
+
+  itemsFromStorage.push(item);
+
+  // Convert to JSON String and set to local storage
+  localStorage.setItem("items", JSON.stringify(itemsFromStorage));
+};
+
+// Create Button Component
 const createButton = (classes) => {
   const button = document.createElement("button");
   button.className = classes;
@@ -40,30 +64,68 @@ const createButton = (classes) => {
   return button;
 };
 
+// Create Icon Component
 const createIcon = (classes) => {
   const icon = document.createElement("i");
   icon.className = classes;
   return icon;
 };
 
+// Get Items from storage
+
+const getItemsFromStorage = () => {
+  let itemsFromStorage;
+
+  if (localStorage.getItem("items") === null) {
+    itemsFromStorage = [];
+  } else {
+    itemsFromStorage = JSON.parse(localStorage.getItem("items"));
+  }
+
+  return itemsFromStorage;
+};
+
+//  onClickItem Function
+const onClickItem = (e) => {
+  if (e.target.parentElement.classList.contains("remove-item")) {
+    removeItem(e.target.parentElement.parentElement);
+  }
+};
+
 // Remove Items
 
-const removeItem = (e) => {
-  if (e.target.parentElement.classList.contains("remove-item")) {
-    if (confirm("Are you sure?")) {
-      e.target.parentElement.parentElement.remove();
+const removeItem = (item) => {
+  if (confirm("Are you Sure?")) {
+    // Remove Item from DOM
+    item.remove();
 
-      checkUI();
-    }
+    // Removes Item from local storage
+    removeItemFromStorage(item.textContent);
+
+    checkUI();
   }
+};
+
+const removeItemFromStorage = (item) => {
+  let itemsFromStorage = getItemsFromStorage();
+
+  // Filter out item to be removed
+  itemsFromStorage = itemsFromStorage.filter((i) => i != item);
+
+  // Re-set to local storage
+  localStorage.setItem("items", JSON.stringify(itemsFromStorage));
 };
 
 // Clear all items
 
 const clearItems = (e) => {
+  // Clear from DOM
   while (itemList.firstChild) {
     itemList.removeChild(itemList.firstChild);
   }
+
+  // Clear from local storage
+  localStorage.removeItem("items");
 
   checkUI();
 };
@@ -98,11 +160,17 @@ const checkUI = (e) => {
   }
 };
 
-// Event Listener
+// Init APP
+function init() {
+  // Event Listener
 
-itemForm.addEventListener("submit", addItem);
-itemList.addEventListener("click", removeItem);
-clearBtn.addEventListener("click", clearItems);
-itemFilter.addEventListener("input", filterItems);
+  itemForm.addEventListener("submit", onAddItemSubmit);
+  itemList.addEventListener("click", onClickItem);
+  clearBtn.addEventListener("click", clearItems);
+  itemFilter.addEventListener("input", filterItems);
+  document.addEventListener("DOMContentLoaded", displayItems);
 
-checkUI();
+  checkUI();
+}
+
+init();
