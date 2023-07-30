@@ -22,7 +22,7 @@ const addItem = (e) => {
 
   itemList.appendChild(li);
 
-  itemInput.value = "";
+  itemInput.value = ''
 };
 
 const createButton = (classes) => {
