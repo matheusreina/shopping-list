@@ -3,11 +3,13 @@ const itemInput = document.getElementById("item-input");
 const itemList = document.getElementById("item-list");
 const itemFilter = document.getElementById("filter");
 const clearBtn = document.getElementById("clear");
+const formBtn = itemForm.querySelector("button");
+let isEditMode = false;
 
 const displayItems = () => {
   const itemsFromStorage = getItemsFromStorage();
   itemsFromStorage.forEach((item) => addItemToDOM(item));
-  checkUI();
+  resetUI();
 };
 
 const onAddItemSubmit = (e) => {
@@ -21,6 +23,17 @@ const onAddItemSubmit = (e) => {
     return;
   }
 
+  // Check for Edit Mode
+  if (isEditMode) {
+    const itemToEdit = itemList.querySelector(".edit-mode");
+
+    removeItemFromStorage(itemToEdit.textContent);
+    itemToEdit.classList.remove("edit-mode");
+    itemToEdit.remove();
+
+    isEditMode = false;
+  }
+
   // Create Item DOM Element
   addItemToDOM(newItem);
 
@@ -28,7 +41,7 @@ const onAddItemSubmit = (e) => {
   addItemToStorage(newItem);
 
   // Check if there is items in the listo to return the UI
-  checkUI();
+  resetUI();
 
   // Clears the input values after the item was added
   itemInput.value = "";
@@ -89,7 +102,21 @@ const getItemsFromStorage = () => {
 const onClickItem = (e) => {
   if (e.target.parentElement.classList.contains("remove-item")) {
     removeItem(e.target.parentElement.parentElement);
+  } else {
+    setItemToEdit(e.target);
   }
+};
+
+// Edit Mode
+const setItemToEdit = (item) => {
+  isEditMode = true;
+
+  itemList.querySelectorAll("li").forEach((i) => i.classList.remove("edit-mode"));
+
+  item.classList.add("edit-mode");
+  formBtn.innerHTML = "<i class='fa-solid fa-pen'></i> Update Item";
+  itemInput.value = item.textContent;
+  formBtn.classList.add("edit-mode-button");
 };
 
 // Remove Items
@@ -102,7 +129,7 @@ const removeItem = (item) => {
     // Removes Item from local storage
     removeItemFromStorage(item.textContent);
 
-    checkUI();
+    resetUI();
   }
 };
 
@@ -127,7 +154,7 @@ const clearItems = (e) => {
   // Clear from local storage
   localStorage.removeItem("items");
 
-  checkUI();
+  resetUI();
 };
 
 // Filter Items
@@ -148,7 +175,9 @@ const filterItems = (e) => {
 
 // Check UI for items
 
-const checkUI = (e) => {
+const resetUI = (e) => {
+  itemInput.value = "";
+
   const itens = itemList.querySelectorAll("li");
 
   if (itens.length === 0) {
@@ -158,6 +187,12 @@ const checkUI = (e) => {
     clearBtn.style.display = "block";
     itemFilter.style.display = "block";
   }
+
+  formBtn.innerHTML = "<i class='fa-solid fa-plus'></i> Add Item";
+  formBtn.classList.remove("edit-mode-button");
+  itemList.querySelectorAll("li").forEach((i) => i.classList.remove("edit-mode"));
+
+  isEditMode = false;
 };
 
 // Init APP
@@ -170,7 +205,7 @@ function init() {
   itemFilter.addEventListener("input", filterItems);
   document.addEventListener("DOMContentLoaded", displayItems);
 
-  checkUI();
+  resetUI();
 }
 
 init();
